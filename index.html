@@ -57,7 +57,7 @@ footer strong{color:#9fb3c8}
 </main>
 <footer>Krijuar nga <strong>Erion Nezha</strong> — © 2026</footer>
 <script>
-const TREE={"dirs":[{"name":"demo","dirs":[],"files":["anaconda.png","bee.png","chameleon.png","cockatoo.png","crocodile.png","gorilla.png","index.html","macaw.png","monkey.png","piranha.png","script.js","sloth.png","style.css","tiger.png","toucan.png"]},{"name":"original","dirs":[],"files":["anaconda.png","bee.png","chameleon.png","cockatoo.png","crocodile.png","gorilla.png","index.html","macaw.png","monkey.png","piranha.png","script.js","sloth.png","style.css","tiger.png","toucan.png"]}],"files":[]};
+const TREE={"dirs": [{"name": "demo", "dirs": [], "files": ["index.html"]}, {"name": "original", "dirs": [], "files": ["Missing _Value3.ipynb", "Missing-Value1.ipynb", "Missing_Value 2.ipynb", "titanic.csv"]}], "files": []};
 function show(id,btn){document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));document.getElementById('p-'+id).classList.add('active');document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
 function buildTree(){
   const t=document.getElementById('tree');let html='';
@@ -70,7 +70,7 @@ async function openFile(path,el){
   document.querySelectorAll('.tfile').forEach(e=>e.classList.remove('active'));el.classList.add('active');
   document.getElementById('cbar').textContent=path;
   const box=document.getElementById('codebox');
-  try{const r=await fetch(path);const txt=await r.text();
+  try{const r=await fetch(encodeURI(path));const txt=await r.text();
     box.innerHTML='<pre>'+hl(txt,path.split('.').pop())+'</pre>';
   }catch(e){box.innerHTML='<pre>Deshtoi leximi i file-it.</pre>';}
 }

@@ -1,0 +1,136 @@
+<!-- Created by Erion Nezha — © 2026 All rights reserved -->
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🚢 Titanic — Trajtimi i Vlerave Munguese — Demo</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0e14;color:#e6e6e6;font-family:'Segoe UI',system-ui,sans-serif;padding:24px;max-width:1000px;margin:0 auto}
+h1{font-size:1.5rem;margin-bottom:6px}
+.sub{color:#9fb3c8;font-size:.92rem;margin-bottom:18px;line-height:1.6}
+.card{background:#0d1420;border:1px solid #ffffff14;border-radius:12px;padding:20px;margin-bottom:18px}
+.card h2{font-size:1.05rem;margin-bottom:12px;color:#7fdbff}
+.methods{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.methods button{background:#1b263b;color:#cfd8e3;border:1px solid #ffffff22;padding:10px 16px;border-radius:8px;cursor:pointer;font-size:.88rem}
+.methods button.active{background:#00d4ff;color:#04121a;font-weight:700;border-color:#00d4ff}
+canvas{width:100%;background:#0a0e14;border:1px solid #ffffff14;border-radius:8px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:14px 0}
+.stats .s{background:#0a0e14;border:1px solid #ffffff14;border-radius:8px;padding:12px;text-align:center}
+.stats .s b{display:block;font-size:1.2rem;color:#7fdbff}
+.stats .s span{font-size:.75rem;color:#9fb3c8}
+.pros{font-size:.86rem;line-height:1.7;color:#9fb3c8}
+.pros b{color:#e6e6e6}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:10px}
+.kv .k{background:#0a0e14;border:1px solid #ffffff14;border-radius:8px;padding:14px;font-size:.86rem;line-height:1.7}
+.kv .k b{color:#7fdbff}
+.note{font-size:.82rem;color:#5c6b7f;margin-top:10px;line-height:1.6}
+table{border-collapse:collapse;font-size:.85rem;margin-top:10px;width:100%;max-width:560px}
+th,td{border:1px solid #ffffff22;padding:7px 10px;text-align:center}
+th{background:#1b263b;color:#7fdbff}
+td.hl{background:#00d4ff22}
+footer{text-align:center;padding:18px;color:#5c6b7f;font-size:.85rem}
+footer strong{color:#9fb3c8}
+</style>
+</head>
+<body>
+<!-- Created by Erion Nezha — © 2026 All rights reserved -->
+<h1>🚢 Titanic — Trajtimi i Vlerave Munguese</h1>
+<p class="sub">Demo ndërvepruese e projektit Machine Learning (3 notebook-e). Në dataset-in Titanic, <b>174 nga 850 pasagjerë (20.5%)</b> nuk kanë moshë të regjistruar — modelet ML nuk pranojnë NaN, ndaj duhet imputim. Zgjidh një metodë dhe shiko si ndryshon shpërndarja e moshës (histogrami përdor <b>moshat reale</b> të dataset-it).</p>
+
+<div class="card">
+<h2>🔧 Zgjidh metodën e imputimit</h2>
+<div class="methods">
+<button class="active" onclick="setM(0,this)">1. Mesorja (median)</button>
+<button onclick="setM(1,this)">2. Vlerë arbitrare (0 / 100)</button>
+<button onclick="setM(2,this)">3. Fundi i shpërndarjes (extreme)</button>
+<button onclick="setM(3,this)">4. Indikator NaN + mesore</button>
+</div>
+<canvas id="hist" width="940" height="340"></canvas>
+<div class="stats">
+<div class="s"><b id="s-n">850</b><span>pasagjerë gjithsej</span></div>
+<div class="s"><b id="s-miss">174</b><span>mosha munguese (20.5%)</span></div>
+<div class="s"><b id="s-med">28.0</b><span>mesorja reale</span></div>
+<div class="s"><b id="s-mean">29.5</b><span>mesatarja reale</span></div>
+<div class="s"><b id="s-new">—</b><span>mesatarja pas imputimit</span></div>
+</div>
+<div class="pros" id="desc"></div>
+</div>
+
+<div class="card">
+<h2>📚 Metodat e trajtuara në notebook-e</h2>
+<div class="kv">
+<div class="k"><b>1. Mean / Median imputation</b><br>NaN → mesorja (28). E thjeshtë, por e zvogëlon variancën dhe e shtrembëron pak shpërndarjen.</div>
+<div class="k"><b>2. Arbitrary value</b><br>NaN → 0 ose 100 (nga garat Kaggle). Kap rëndësinë e mungesës, por e shtrembëron fort shpërndarjen.</div>
+<div class="k"><b>3. End of distribution</b><br>NaN → mean + 3·std = 73.2. Vlerat e imputuara dalin si "outliers" që modeli i dallon.</div>
+<div class="k"><b>4. Missing indicator</b><br>Shtohet kolonë e re <i>age_nan</i> (1 nëse mungonte) + imputim me mesore. Ruan informacionin e mungesës pa shtrembëruar shpërndarjen.</div>
+<div class="k"><b>5. Frequent category</b><br>Për variabla kategorike (p.sh. <i>embarked</i>): NaN → kategoria më e shpeshtë. Në Titanic: S = 589, C = 176, Q = 84 → NaN-të bëhen "S".</div>
+<div class="k"><b>6. One-hot encoding</b><br><i>sex</i> → dy kolona binare (male/female); kategoritë e rralla grupohen si "Rare_var". Shih tabelën më poshtë.</div>
+</div>
+</div>
+
+<div class="card">
+<h2>🔢 Shembull: one-hot encoding i gjinisë</h2>
+<table>
+<tr><th>sex</th><th>sex_female</th><th>sex_male</th></tr>
+<tr><td>male</td><td class="hl">0</td><td class="hl">1</td></tr>
+<tr><td>female</td><td class="hl">1</td><td class="hl">0</td></tr>
+</table>
+<p class="note"><i>pd.get_dummies(df, drop_first=True)</i> — variablat kategorike kthehen në kolona numerike 0/1 që modelet ML i kuptojnë. Notebook-u i tretë e demonstron edhe me dataset-in Mercedes (kolona X0…X6 me shumë kategori).</p>
+</div>
+
+<footer>Krijuar nga <strong>Erion Nezha</strong> — © 2026</footer>
+<script>
+const AGES=[38,30,54,40,28,19,30,22,21,27,60,56,20,16,48,40,22,32,27,24,25,18,27,35,27,42,19,21,13,27,13,29,38,40,27,45,34,22,57,2,58,35,22,46,50,14,58,23,32,18,6,37,1,29,24,36,39,36,24,42,33,26,20,16,41,30,42,26,24,19,20,38,38,39,24,18,18,40,14,47,21,42,31,36,38,16,8,30,17,49,22,22,24,26,20,49,25,19,36,18,48,18,18,31,36,11,55,34,18,28,25,27,20,51,34,49,21,30,45,0,65,18,21,25,45,54,64,36,25,47,0,38,24,15,27,39,36,26,80,30,22,2,43,25,47,3,20,23,61,22,18,19,36,6,8,40,47,40,9,24,10,16,28,10,45,30,33,19,28,28,2,36,27,19,17,31,22,61,16,1,47,28,35,47,30,3,21,46,8,14,30,44,48,20,64,0,48,21,30,28,26,49,32,36,1,22,29,35,52,30,42,22,24,30,35,7,36,20,25,23,70,2,18,29,31,5,30,25,21,2,20,3,33,0,30,62,60,53,16,30,22,45,30,19,21,33,33,48,16,18,40,34,32,33,23,39,2,25,37,18,28,16,24,28,50,17,41,18,30,52,20,24,36,26,26,24,28,38,62,58,44,30,17,23,35,51,27,56,13,20,27,4,18,24,29,21,31,33,18,42,11,19,22,27,58,24,19,36,34,14,48,32,16,54,0,18,28,50,53,40,30,20,19,17,23,22,23,60,4,49,22,9,55,20,28,11,30,21,17,14,17,28,45,52,48,49,26,4,22,34,54,55,25,60,31,50,0,25,45,18,38,26,17,22,10,28,67,27,25,31,45,9,36,18,7,18,39,4,33,17,39,27,24,41,32,20,38,35,36,29,45,22,19,40,22,35,25,62,43,50,24,21,13,34,32,13,26,42,17,28,30,21,30,63,42,28,30,22,32,70,32,28,26,22,25,29,2,45,25,47,28,18,2,28,14,33,32,24,65,20,30,30,21,25,25,39,28,24,6,22,22,25,50,16,29,57,4,25,33,24,24,22,37,24,36,32,2,12,28,22,21,44,9,17,15,23,41,24,24,6,31,14,29,18,23,29,50,15,3,31,63,34,34,22,21,21,25,32,3,20,55,24,36,26,22,2,28,18,40,27,35,28,18,50,25,25,20,35,44,29,36,8,29,9,24,5,32,0,36,23,21,9,26,39,35,28,25,29,43,24,36,18,29,57,40,27,32,33,50,42,55,28,28,36,28,31,32,30,35,20,31,29,60,22,27,18,50,18,29,19,21,44,22,26,32,48,23,74,21,25,19,29,32,51,39,29,32,32,18,25,50,35,59,7,31,0,18,30,35,59,19,29,19,21,36,26,30,27,17,50,36,30,51,55,12,55,19,55,18,40,24,16,35,21,60,53,30,36,23,1,32,25,47,51,34,50,4,19,35,34,40,32,31,18,9,46,26,31,18,41,21,11,24,21,48,31,4,54,64,54,61,76,23,23,36,46,7,37,16,18,38,55,58,24,3,52];
+const NAN_COUNT=174, MEDIAN=28, MEAN=29.52, EXTREME=73.17;
+const DESC=[
+ "<b>1. Imputimi me mesore:</b> 174 vlerat NaN zëvendësohen me <b>28</b> (mesorja). Avantazhe: e thjeshtë, nuk ndikohet nga outliers. Disavantazhe: e zvogëlon variancën, e shtrembëron pak shpërndarjen origjinale.",
+ "<b>2. Vlera arbitrare:</b> NaN → <b>0</b> (ose 100). Teknikë nga garat Kaggle: nëse mungesa vetë ka kuptim parashikues, vlera ekstreme e bën modelin ta «shohë». Disavantazhi: shtrembërim i fortë i shpërndarjes nëse mungesa nuk është informative.",
+ "<b>3. Fundi i shpërndarjes:</b> NaN → <b>73.2</b> (mean + 3·std). Vlerat e imputuara dalin në bishtin e djathtë si outliers të dukshëm. Avantazh: e thjeshtë dhe kap rëndësinë e mungesës. Disavantazh: funksionon mirë vetëm kur të dhënat NUK mungojnë krejtësisht rastësisht.",
+ "<b>4. Indikator NaN + mesore:</b> shtohet kolona <b>age_nan</b> (1 = mungonte, 0 = prezente) dhe NaN-të mbushen me mesoren 28. Avantazhe: ruan informacionin e mungesës DHE shpërndarjen origjinale. Disavantazh: shton një dimension (curse of dimensionality)."
+];
+let method=0;
+function setM(m,btn){
+  method=m;
+  document.querySelectorAll('.methods button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('desc').innerHTML=DESC[m];
+  draw();
+}
+function imputed(){
+  let extra=[];
+  if(method===0)extra=Array(NAN_COUNT).fill(MEDIAN);
+  else if(method===1)extra=Array(NAN_COUNT).fill(0);
+  else if(method===2)extra=Array(NAN_COUNT).fill(Math.round(EXTREME));
+  else extra=Array(NAN_COUNT).fill(MEDIAN);
+  return AGES.concat(extra);
+}
+function draw(){
+  const c=document.getElementById('hist'),x=c.getContext('2d');
+  const W=c.width,H=c.height,pl=40,pb=40,pt=20;x.clearRect(0,0,W,H);
+  const data=imputed();
+  const BINS=25,maxV=80,bw=maxV/BINS,iw=W-pl-10;
+  const hist=new Array(BINS).fill(0),imp=new Array(BINS).fill(0);
+  AGES.forEach(a=>{const b=Math.min(BINS-1,Math.floor(a/bw));hist[b]++;});
+  const extraN=data.length-AGES.length;
+  let ev=method===0?MEDIAN:method===1?0:method===2?Math.round(EXTREME):MEDIAN;
+  const eb=Math.min(BINS-1,Math.floor(ev/bw));imp[eb]=extraN;
+  const mx=Math.max(...hist)+extraN;
+  for(let i=0;i<BINS;i++){
+    const bx=pl+iw*i/BINS,bwid=iw/BINS-2;
+    const h1=(H-pt-pb)*hist[i]/mx,h2=(H-pt-pb)*imp[i]/mx;
+    x.fillStyle="#00d4ff88";x.fillRect(bx,H-pb-h1,bwid,h1);
+    if(h2>0){x.fillStyle="#fbbf24";x.fillRect(bx,H-pb-h1-h2,bwid,h2);}
+    if(i%5===0){x.fillStyle="#5c6b7f";x.font="11px Segoe UI";x.fillText((i*bw)+"-"+((i+1)*bw),bx,H-pb+14);}
+  }
+  x.fillStyle="#00d4ff";x.fillRect(pl,8,14,10);x.fillStyle="#9fb3c8";x.font="12px Segoe UI";x.fillText("të dhëna reale (676)",pl+20,17);
+  x.fillStyle="#fbbf24";x.fillRect(pl+170,8,14,10);x.fillStyle="#9fb3c8";x.fillText("vlera të imputuara (174)",pl+190,17);
+  x.fillStyle="#5c6b7f";x.fillText("Mosha →",pl+iw/2-24,H-6);
+  const mean=data.reduce((a,b)=>a+b,0)/data.length;
+  document.getElementById('s-new').textContent=mean.toFixed(1);
+}
+setM(0,document.querySelector('.methods button'));
+</script>
+</body>
+</html>
